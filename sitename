@@ -1,0 +1,43 @@
+site_name="$1"
+
+if [ -z "$site_name" ]; then
+	echo "Please provide a site name as a command-line argument."
+	exit 1
+fi
+
+read -p "Enter MySQL root username: " mysql_user
+
+read -s -p "Enter MySQL root password: " mysql_password
+echo
+
+mysql -u "$mysql_user" -p"$mysql_password" -e "SELECT 1" >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+	echo "Invalid MySQL credentials. Please check the username and passowrd."
+	exit 1
+fi
+
+wget https://wordpress.org/latest.tar.gz
+tar -xvf latest.tar.gz
+
+if [ -d "$site_name" ]; then
+	echo "The directory '$site_name' already exists. Please choose a different site name."
+	exit 1
+fi
+
+mv wordpress "$site_name"
+
+mysql -u "$mysql_user" -p"$mysql_password" -e "CREATE DATABASE ${site_name};"
+
+cd "$site_name"
+cp wp-config-sample.php wp-config.php
+sed -i "s/database_name_here/${site_name}/" wp-config.php
+sed -i "s/username_here/${mysql_user}/" wp-config.php
+sed -i "s/password-here/${mysql_password}/" wp-config.php
+
+chown -R www-data:www-data .
+chown -R 755 .
+
+echo "WordPress site '${site_name}' created successfully!"
+
+cd ..
+rm latest.tar.gz

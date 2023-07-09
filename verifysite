@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Open example.com</title>
+</head>
+<body>
+  <script type="text/javascript">
+    function checkWebsite() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://example.com', true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            // Site is up and healthy
+            var openConfirm = confirm('example.com is up and healthy. Do you want to open it in a browser?');
+            if (openConfirm) {
+              window.open('https://example.com', '_blank');
+            }
+          } else {
+            // Site is down or encountered an error
+            alert('example.com is down or encountered an error.');
+          }
+        }
+      };
+      xhr.send();
+    }
+
+    // Call the function when the page loads
+    window.onload = checkWebsite;
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Get the site name from command-line argument
+site_name="$1"
+
+# Verify if the site name is provided
+if [ -z "$site_name" ]; then
+  echo "Please provide a site name as a command-line argument."
+  exit 1
+fi
+
+# Verify if MySQL is installed
+if ! command -v mysql >/dev/null; then
+  echo "MySQL is not installed. Please install MySQL and try again."
+  exit 1
+fi
+
+# Verify if PHP is installed
+if ! command -v php >/dev/null; then
+  echo "PHP is not installed. Installing PHP..."
+  sudo apt update
+  sudo apt install -y php libapache2-mod-php php-mysql
+fi
+
+# Verify if Apache is installed
+if ! command -v apache2 >/dev/null; then
+  echo "Apache is not installed. Please install Apache and try again."
+  exit 1
+fi
+
+# Install required packages
+sudo apt update
+sudo apt install -y mysql-server
+
+# Start MySQL service
+sudo service mysql start
+
+# Download the latest WordPress version
+wget https://wordpress.org/latest.tar.gz
+tar -xvf latest.tar.gz
+
+# Create a new MySQL database for the site
+mysql -e "CREATE DATABASE ${site_name};"
+
+# Create a virtual host configuration file for Apache
+sudo tee /etc/apache2/sites-available/${site_name}.conf > /dev/null <<EOF
+<VirtualHost *:80>
+    ServerAdmin admin@${site_name}
+    DocumentRoot /var/www/${site_name}
+    ServerName ${site_name}
+    ServerAlias www.${site_name}
+
+    <Directory /var/www/${site_name}>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/${site_name}_error.log
+    CustomLog ${APACHE_LOG_DIR}/${site_name}_access.log combined
+</VirtualHost>
+EOF
+
+# Enable the virtual host
+sudo a2ensite ${site_name}
+
+# Restart Apache service
+sudo service apache2 restart
+
+# Move the WordPress files to the desired directory
+sudo mv wordpress /var/www/${site_name}
+
+# Set permissions
+sudo chown -R www-data:www-data /var/www/${site_name}
+sudo chmod -R 755 /var/www/${site_name}
+
+# Create the wp-config.php file
+cd /var/www/${site_name}
+cp wp-config-sample.php wp-config.php
+sed -i "s/database_name_here/${site_name}/" wp-config.php
+sed -i "s/username_here/root/" wp-config.php
+sed -i "s/password_here//" wp-config.php
+
+# Inform the user about the successful installation
+echo "WordPress site '${site_name}' created successfully!"
+

@@ -1,0 +1,6 @@
+services:
+  control:
+    image: ubuntu:latest
+    volumes:
+      - ./control.sh:/home/ubuntu/start-stop-container/control.sh
+

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Check if the website is up and healthy
+if curl -s --head --request GET http://example.com | grep "200 OK" > /dev/null; then
+    echo "The website is up and healthy."
+    read -p "Press enter to open example.com in your default browser."
+    start http://example.com
+else
+    echo "The website is not available or experiencing issues."
+fi
+
